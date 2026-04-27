@@ -243,6 +243,21 @@
           "autosize"; true
         }
       </script>
+
+      <script>
+  // save scroll position before refresh
+  window.addEventListener("beforeunload", () => {
+    localStorage.setItem("scrollY", window.scrollY);
+  });
+
+  // restore scroll position after load
+  window.addEventListener("load", () => {
+    const scrollY = localStorage.getItem("scrollY");
+    if (scrollY !== null) {
+      window.scrollTo(0, parseInt(scrollY));
+    }
+  });
+</script>
     </div>
   </body>
 </html>

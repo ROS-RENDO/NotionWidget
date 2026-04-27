@@ -9,6 +9,11 @@
       }
       body {
         background: #0f0f0f;
+        overflow-x: hidden;
+      }
+
+      html, body {
+        scroll-behavior: auto;
       }
 
       .side-by-side {
@@ -19,24 +24,37 @@
       .side-by-side .left {
         flex: 1;
         min-width: 0;
+        overflow: hidden;
       }
       .side-by-side .right {
         width: 550px;
         flex-shrink: 0;
+        overflow: hidden;
+      }
+
+      .tradingview-widget-container {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .tradingview-widget-container__widget {
+        overflow: hidden !important;
       }
     </style>
     <script>
-      // Prevent TradingView widget duplication on page refresh
-      if (window.location.hash !== '#tv-loaded') {
-        // First load or after navigation
-        window.location.hash = '#tv-loaded';
-      } else {
-        // If reloading with the hash already set, hard refresh
-        if (performance.navigation.type === 1) {
-          // Page was refreshed
-          window.location.hash = '';
-          window.location.reload();
-        }
+      // Store scroll position consistently without hash manipulation
+      let lastScrollY = 0;
+      const SCROLL_KEY = 'widget-scroll-position';
+      
+      // Save scroll position before page unload
+      window.addEventListener('beforeunload', () => {
+        sessionStorage.setItem(SCROLL_KEY, window.scrollY);
+      });
+
+      // Prevent multiple widget loads
+      let pageLoaded = sessionStorage.getItem('page-loaded');
+      if (!pageLoaded) {
+        sessionStorage.setItem('page-loaded', 'true');
       }
     </script>
   </head>
@@ -309,39 +327,42 @@
       </script>
 
       <script>
-  // Clear TradingView widget cache and prevent duplication on page refresh
-  window.addEventListener("beforeunload", () => {
-    localStorage.setItem("scrollY", window.scrollY);
-    // Clear any cached widget instances
-    if (window.tvBootstrap) {
-      window.tvBootstrap = undefined;
-    }
+  // Disable automatic browser scroll restoration to prevent conflicts
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+
+  const SCROLL_KEY = 'widget-scroll-position';
+
+  // Restore scroll position after page fully loads
+  window.addEventListener('load', () => {
+    // Wait for all widgets to render
+    setTimeout(() => {
+      const savedScrollY = sessionStorage.getItem(SCROLL_KEY);
+      
+      if (savedScrollY !== null) {
+        const scrollPos = parseInt(savedScrollY, 10);
+        // Smoothly restore to the saved position
+        window.scrollTo({
+          top: scrollPos,
+          left: 0,
+          behavior: 'auto'
+        });
+      } else {
+        // First load - scroll to top
+        window.scrollTo(0, 0);
+      }
+    }, 1000);
   });
 
-  // Restore scroll position and reinitialize widgets after load
-  window.addEventListener("load", () => {
-    const scrollY = localStorage.getItem("scrollY");
-    if (scrollY !== null) {
-      window.scrollTo(0, parseInt(scrollY));
-    }
-    
-    // Force TradingView widgets to reinitialize cleanly
-    if (window.tvWidget) {
-      setTimeout(() => {
-        window.location.hash = '#tv-loaded';
-      }, 500);
-    }
-  });
+  // Track current scroll position
+  window.addEventListener('scroll', () => {
+    lastScrollY = window.scrollY;
+  }, true);
 
-  // Prevent rapid consecutive refreshes from causing duplication
-  document.addEventListener("keydown", (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-      e.preventDefault();
-      window.location.hash = '';
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
-    }
+  // Clean up session storage on tab close
+  window.addEventListener('unload', () => {
+    sessionStorage.removeItem(SCROLL_KEY);
   });
 </script>
     </div>

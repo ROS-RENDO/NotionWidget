@@ -25,6 +25,20 @@
         flex-shrink: 0;
       }
     </style>
+    <script>
+      // Prevent TradingView widget duplication on page refresh
+      if (window.location.hash !== '#tv-loaded') {
+        // First load or after navigation
+        window.location.hash = '#tv-loaded';
+      } else {
+        // If reloading with the hash already set, hard refresh
+        if (performance.navigation.type === 1) {
+          // Page was refreshed
+          window.location.hash = '';
+          window.location.reload();
+        }
+      }
+    </script>
   </head>
   <body>
     <!-- Ticker Tape -->
@@ -63,21 +77,21 @@
             async
           >
             {
-              "dataSource"; "SPX500",
-              "blockSize"; "market_cap_basic",
-              "blockColor"; "change",
-              "grouping"; "sector",
-              "locale"; "en",
-              "symbolUrl"; "",
-              "colorTheme"; "dark",
-              "exchanges"; [],
-              "hasTopBar"; false,
-              "isDataSetEnabled"; false,
-              "isZoomEnabled"; true,
-              "hasSymbolTooltip"; true,
-              "isMonoSize"; false,
-              "width"; "100%",
-              "height"; "100%"
+              "dataSource": "SPX500",
+              "blockSize": "market_cap_basic",
+              "blockColor": "change",
+              "grouping": "sector",
+              "locale": "en",
+              "symbolUrl": "",
+              "colorTheme": "white",
+              "exchanges": [],
+              "hasTopBar": false,
+              "isDataSetEnabled": false,
+              "isZoomEnabled": true,
+              "hasSymbolTooltip": true,
+              "isMonoSize": false,
+              "width": "100%",
+              "height": "100%"
             }
           </script>
         </div>
@@ -111,13 +125,13 @@
     async
   >
     {
-      "colorTheme"; "dark",
-      "isTransparent"; false,
-      "locale"; "en",
-      "currencies"; ["EUR","USD","JPY","GBP","CHF","AUD","CAD","NZD","CNY"],
-      "backgroundColor"; "#0F0F0F",
-      "width"; "100%",
-      "height"; "100%"
+      "colorTheme": "dark",
+      "isTransparent": false,
+      "locale": "en",
+      "currencies": ["EUR","USD","JPY","GBP","CHF","AUD","CAD","NZD","CNY"],
+      "backgroundColor": "#0F0F0F",
+      "width": "100%",
+      "height": "100%"
     }
   </script>
 </div>
@@ -128,16 +142,16 @@
   <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank"><span class="blue-text">Market summary</span></a><span class="trademark"> by TradingView</span></div>
   <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
   {
-  "colorTheme"; "dark",
-  "locale"; "en",
-  "largeChartUrl"; "",
-  "isTransparent"; false,
-  "showSymbolLogo"; true,
-  "backgroundColor"; "#0F0F0F",
-  "support_host"; "https://www.tradingview.com",
-  "width"; 550,
-  "height"; 550,
-  "symbolsGroups"; [
+  "colorTheme": "dark",
+  "locale": "en",
+  "largeChartUrl": "",
+  "isTransparent": false,
+  "showSymbolLogo": true,
+  "backgroundColor": "#ffffff",
+  "support_host": "https://www.tradingview.com",
+  "width": 550,
+  "height": 550,
+  "symbolsGroups": [
     {
       "name": "Indices",
       "symbols": [
@@ -269,42 +283,64 @@
         async
       >
         {
-          "allow_symbol_change"; true,
-          "calendar"; false,
-          "details"; false,
-          "hide_side_toolbar"; true,
-          "hide_top_toolbar"; false,
-          "hide_legend"; false,
-          "hide_volume"; false,
-          "hotlist"; false,
-          "interval"; "D",
-          "locale"; "en",
-          "save_image"; true,
-          "style"; "1",
-          "symbol"; "OANDA:XAUUSD",
-          "theme"; "dark",
-          "timezone"; "Etc/UTC",
-          "backgroundColor"; "#0F0F0F",
-          "gridColor"; "rgba(242, 242, 242, 0.06)",
-          "watchlist"; [],
-          "withdateranges"; false,
-          "compareSymbols"; [],
-          "studies"; [],
-          "autosize"; true
+          "allow_symbol_change": true,
+          "calendar": false,
+          "details": false,
+          "hide_side_toolbar": true,
+          "hide_top_toolbar": false,
+          "hide_legend": false,
+          "hide_volume": false,
+          "hotlist": false,
+          "interval": "D",
+          "locale": "en",
+          "save_image": true,
+          "style": "1",
+          "symbol": "OANDA:XAUUSD",
+          "theme": "white",
+          "timezone": "Etc/UTC",
+          "backgroundColor": "#0F0F0F",
+          "gridColor": "rgba(242, 242, 242, 0.06)",
+          "watchlist": [],
+          "withdateranges": false,
+          "compareSymbols": [],
+          "studies": [],
+          "autosize": true
         }
       </script>
 
       <script>
-  // save scroll position before refresh
+  // Clear TradingView widget cache and prevent duplication on page refresh
   window.addEventListener("beforeunload", () => {
     localStorage.setItem("scrollY", window.scrollY);
+    // Clear any cached widget instances
+    if (window.tvBootstrap) {
+      window.tvBootstrap = undefined;
+    }
   });
 
-  // restore scroll position after load
+  // Restore scroll position and reinitialize widgets after load
   window.addEventListener("load", () => {
     const scrollY = localStorage.getItem("scrollY");
     if (scrollY !== null) {
       window.scrollTo(0, parseInt(scrollY));
+    }
+    
+    // Force TradingView widgets to reinitialize cleanly
+    if (window.tvWidget) {
+      setTimeout(() => {
+        window.location.hash = '#tv-loaded';
+      }, 500);
+    }
+  });
+
+  // Prevent rapid consecutive refreshes from causing duplication
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+      e.preventDefault();
+      window.location.hash = '';
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
   });
 </script>
